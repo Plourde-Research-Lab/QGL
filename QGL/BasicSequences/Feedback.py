@@ -65,4 +65,8 @@ def Reset(qubits, measDelay = 1e-6, signVec = None, doubleRound = True, buf = 20
 	if docals:
 		seqs += create_cal_seqs(qubits, calRepeats, measChans=measChans, waitcmp=True)
 
-	return seqs
+	fileNames = compile_to_hardware(seqs, 'Reset/Reset')
+	print(fileNames)
+
+	if showPlot:
+		plot_pulse_files(fileNames)
