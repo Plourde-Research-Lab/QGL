@@ -230,13 +230,42 @@ def arb_axis_drag(nutFreq=10e6,
 def jpm(amp=1, length=0, sigma=5e-9, samplingRate=1.2e9, **params):
 
     # Construct Park Bias Pulse
-    pulse = gaussian(amp=amp, length=length, sigma=sigma, samplingRate=samplingRate)
+    pulse = tanh(amp=amp, length=length, sigma=sigma, samplingRate=samplingRate)
 
     # Add interaction pulse if needed
-    if "interactLength" in params:
-        if params['interactLength'] > 0:
-            interact = gaussian(amp=params['interactAmp'],
-            length=params['interactLength'], sigma=1e-9,
-            samplingRate=samplingRate)
+    if "interactLength" in params and params['interactLength'] > 0:
+        interact = tanh(amp=params['interactAmp'],
+                            length=params['interactLength'], sigma=sigma,
+                            samplingRate=samplingRate)
+
+        # Pad and Add
+        delay1 = delay(length=params['interactDelay'], samplingRate=samplingRate)
+        delay2 = delay(length=(length-params['interactDelay']-params['interactLength']),
+                        samplingRate=samplingRate)
+        interact = np.hstack((delay1, interact, delay2))
+        pulse = pulse + interact
+
+    # Add Tipping Pulse
+    if "tiltLength" in params and params['tiltLength'] > 0:
+        tilt = gaussian(amp=params['tiltAmp'], length=params['tiltLength'],
+                        sigma=1e-9, samplingRate=samplingRate)
+        # Pad and Add
+        delay1 = delay(length=params['interactDelay']+(params['interactLength']-params['tiltLength']),
+                        samplingRate=samplingRate)
+        tilt = np.hstack((delay1, tilt, delay2))
+        pulse = pulse + tilt
+
+    # Add Standby Pulse
+    if "standbyLength" in params and params['standbyLength'] > 0:
+        standby = tanh(amp=params['standbyAmp'],
+                            length=params['standbyLength'],
+                            samplingRate=samplingRate)
+
+        # Pad and Add
+        delay1 = delay(length=params['standbyDelay'], samplingRate=samplingRate)
+        delay2 = delay(length=length-params['standbyDelay']-params['standbyLength'],
+                        samplingRate=samplingRate)
+        standby = np.hstack((delay1, standby, delay2))
+        pulse = pulse + standby
 
     return pulse

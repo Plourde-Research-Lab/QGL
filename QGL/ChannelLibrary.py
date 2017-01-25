@@ -267,6 +267,13 @@ def EdgeFactory(source, target):
         raise ValueError('Edge {0} not found in connectivity graph'.format((
             source, target)))
 
+def JPMFactory(label, **kwargs):
+    '''Return a saved JPM channel or create a new one. '''
+    if channelLib and label in channelLib and isinstance(channelLib[label], Channels.JPM):
+        return channelLib[label]
+    else:
+        return Channels.JPM(label=label, **kwargs)
+
 # global channel library
 migrator = JSONMigrators.ChannelMigrator(config.channelLibFile)
 migrationMsg = migrator.migrate()

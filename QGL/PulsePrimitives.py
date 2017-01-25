@@ -702,7 +702,7 @@ def BLANK(chan, length):
 def JPM1(jpm, label='JPM1', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
-    params['shapeFun'] = 'jpm'
+    params['shapeFun'] = PulseShapes.jpm
     params['standbyLength'] = 0
     params['tiltLength'] = 0
     params['interactLength'] = 0
@@ -713,7 +713,7 @@ def JPM1(jpm, label='JPM1', ignoredStrParams=[], **kwargs):
 def JPM2(jpm, label='JPM2', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
-    params['shapeFun'] = 'jpm'
+    params['shapeFun'] = PulseShapes.jpm
     params['standbyLength'] = 0
     params['tiltLength'] = 0
 
@@ -723,7 +723,7 @@ def JPM2(jpm, label='JPM2', ignoredStrParams=[], **kwargs):
 def JPM3(jpm, label='JPM3', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
-    params['shapeFun'] = 'jpm'
+    params['shapeFun'] = PulseShapes.jpm
     params['standbyLength'] = 0
 
     return Pulse(label, jpm, params, ignoredStrParams)
@@ -732,6 +732,6 @@ def JPM3(jpm, label='JPM3', ignoredStrParams=[], **kwargs):
 def JPM4(jpm, label='JPM4', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
-    params['shapeFun'] = 'jpm'
+    params['shapeFun'] = PulseShapes.jpm
 
     return Pulse(label, jpm, params, ignoredStrParams)
