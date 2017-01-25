@@ -699,7 +699,7 @@ def BLANK(chan, length):
 # JPM operators
 
 ## Single Bias Pulse (Park Bias)
-def JPM1(jpm, label='JPM1', ignoredStrParams=[], **kwargs):
+def JPM1(jpm, amp=0, phase=0,label='JPM1', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
@@ -707,31 +707,47 @@ def JPM1(jpm, label='JPM1', ignoredStrParams=[], **kwargs):
     params['tiltLength'] = 0
     params['interactLength'] = 0
 
-    return Pulse(label, jpm, params, ignoredStrParams)
+    if "amp" in params:
+      del params["amp"]
+    if "phase" in params:
+      del params["phase"]
+    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Second Interaction Bias Pulse during Park Bias
-def JPM2(jpm, label='JPM2', ignoredStrParams=[], **kwargs):
+def JPM2(jpm, amp=0, phase=0, label='JPM2', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
     params['standbyLength'] = 0
     params['tiltLength'] = 0
 
-    return Pulse(label, jpm, params, ignoredStrParams)
+    if "amp" in params:
+      del params["amp"]
+    if "phase" in params:
+      del params["phase"]
+    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Fast Tipping Pulse aligned with end of Interaction Pulse
-def JPM3(jpm, label='JPM3', ignoredStrParams=[], **kwargs):
+def JPM3(jpm, amp=0, phase=0, label='JPM3', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
     params['standbyLength'] = 0
 
-    return Pulse(label, jpm, params, ignoredStrParams)
+    if "amp" in params:
+      del params["amp"]
+    if "phase" in params:
+      del params["phase"]
+    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Standby Pulse Preceding Interaction Pulse
-def JPM4(jpm, label='JPM4', ignoredStrParams=[], **kwargs):
+def JPM4(jpm, amp=0, phase=0, label='JPM4', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
 
-    return Pulse(label, jpm, params, ignoredStrParams)
+    if "amp" in params:
+      del params["amp"]
+    if "phase" in params:
+      del params["phase"]
+    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)

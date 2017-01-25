@@ -1,4 +1,4 @@
-from .Channels import Qubit, Measurement, Edge
+from .Channels import Qubit, Measurement, Edge, JPM
 from .ChannelLibrary import QubitFactory, MeasFactory, EdgeFactory, JPMFactory
 from .PulsePrimitives import *
 from .Compiler import compile_to_hardware, set_log_level

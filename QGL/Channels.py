@@ -196,6 +196,8 @@ class JPM(LogicalChannel):
         'tiltLength': 10e-9})
 
     gateChan = Instance((str, LogicalMarkerChannel))
+    frequency = Float(0.0).tag(
+        desc='modulation frequency of the channel (can be positive or negative)')
 
     def __init__(self, **kwargs):
         super(JPM, self).__init__(**kwargs)
