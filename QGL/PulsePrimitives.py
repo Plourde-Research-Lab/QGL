@@ -694,3 +694,44 @@ def MeasEcho(qM, qD, delay, piShift=None, phase=0):
 # Gating/blanking pulse primitives
 def BLANK(chan, length):
     return TAPulse("BLANK", chan.gateChan, length, 1, 0, 0)
+
+
+# JPM operators
+
+## Single Bias Pulse (Park Bias)
+def JPM1(jpm, label='JPM1', ignoredStrParams=[], **kwargs):
+    params = overrideDefaults(jpm, kwargs)
+
+    params['shapeFun'] = 'jpm'
+    params['standbyLength'] = 0
+    params['tiltLength'] = 0
+    params['interactLength'] = 0
+
+    return Pulse(label, jpm, params, ignoredStrParams)
+
+## Second Interaction Bias Pulse during Park Bias
+def JPM2(jpm, label='JPM2', ignoredStrParams=[], **kwargs):
+    params = overrideDefaults(jpm, kwargs)
+
+    params['shapeFun'] = 'jpm'
+    params['standbyLength'] = 0
+    params['tiltLength'] = 0
+
+    return Pulse(label, jpm, params, ignoredStrParams)
+
+## Fast Tipping Pulse aligned with end of Interaction Pulse
+def JPM3(jpm, label='JPM3', ignoredStrParams=[], **kwargs):
+    params = overrideDefaults(jpm, kwargs)
+
+    params['shapeFun'] = 'jpm'
+    params['standbyLength'] = 0
+
+    return Pulse(label, jpm, params, ignoredStrParams)
+
+## Standby Pulse Preceding Interaction Pulse
+def JPM4(jpm, label='JPM4', ignoredStrParams=[], **kwargs):
+    params = overrideDefaults(jpm, kwargs)
+
+    params['shapeFun'] = 'jpm'
+
+    return Pulse(label, jpm, params, ignoredStrParams)
