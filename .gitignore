@@ -4,3 +4,5 @@
 *.h5
 *.py~
 *.py#
+.ipynb_checkpoints/
+*.ipynb
