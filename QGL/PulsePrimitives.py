@@ -699,7 +699,7 @@ def BLANK(chan, length):
 # JPM operators
 
 ## Single Bias Pulse (Park Bias)
-def JPM1(jpm, amp=0, phase=0,label='JPM1', ignoredStrParams=[], **kwargs):
+def JPM1(jpm, amp=1, phase=0, label='JPM1', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
@@ -714,7 +714,7 @@ def JPM1(jpm, amp=0, phase=0,label='JPM1', ignoredStrParams=[], **kwargs):
     return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Second Interaction Bias Pulse during Park Bias
-def JPM2(jpm, amp=0, phase=0, label='JPM2', ignoredStrParams=[], **kwargs):
+def JPM2(jpm, amp=1, phase=0, label='JPM2', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
@@ -728,7 +728,7 @@ def JPM2(jpm, amp=0, phase=0, label='JPM2', ignoredStrParams=[], **kwargs):
     return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Fast Tipping Pulse aligned with end of Interaction Pulse
-def JPM3(jpm, amp=0, phase=0, label='JPM3', ignoredStrParams=[], **kwargs):
+def JPM3(jpm, amp=1, phase=0, label='JPM3', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm
@@ -741,7 +741,7 @@ def JPM3(jpm, amp=0, phase=0, label='JPM3', ignoredStrParams=[], **kwargs):
     return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
 
 ## Standby Pulse Preceding Interaction Pulse
-def JPM4(jpm, amp=0, phase=0, label='JPM4', ignoredStrParams=[], **kwargs):
+def JPM4(jpm, amp=1, phase=0, label='JPM4', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
     params['shapeFun'] = PulseShapes.jpm

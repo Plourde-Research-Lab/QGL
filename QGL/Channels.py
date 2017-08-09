@@ -184,16 +184,18 @@ class JPM(LogicalChannel):
     pulseParams = Dict(default={
         'shapeFun': PulseShapes.jpm,
         'sigma': 5e-9,
-        'amp': 0.25,
-        'length': 50e-6,
+        'amp': 1,
+        'length': 1.5e-6,
+        'parkAmp': 0.25,
+        'parkLength': 1.2e-6,
         'standbyAmp': 0.1,
-        'standbyDelay': 5e-6,
-        'standbyLength': 1e-6,
-        'interactAmp': 0.25,
-        'interactDelay': 10e-6,
-        'interactLength': 25e-6,
-        'tiltAmp': 0.25,
-        'tiltLength': 10e-9})
+        'standbyDelay': 1e-8,
+        'standbyLength': 1e-7,
+        'interactAmp': 0.5,
+        'interactDelay': 1.1e-7,
+        'interactLength': 20e-9,
+        'tiltAmp': 1,
+        'tiltLength': 12e-9})
 
     gateChan = Instance((str, LogicalMarkerChannel))
     frequency = Float(0.0).tag(
