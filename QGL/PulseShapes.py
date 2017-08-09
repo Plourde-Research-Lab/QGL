@@ -56,6 +56,7 @@ def drag(amp=1,
     QQuad = dragScaling * derivScale * xPts * np.exp(-0.5 * (xPts**2))
     return amp * (IQuad + 1j * QQuad)
 
+
 def gaussOn(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
     '''
     A half-gaussian pulse going from zero to full
@@ -71,6 +72,7 @@ def gaussOn(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
     amp = (amp / (1 - nextPoint))
     return (amp * (np.exp(-0.5 * (xPts**2)) - nextPoint)).astype(np.complex)
 
+
 def gaussOff(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
     '''
     A half-gaussian pulse going from full to zero
@@ -85,6 +87,7 @@ def gaussOff(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
     #Rescale so that it still goes to amp
     amp = (amp / (1 - nextPoint))
     return (amp * (np.exp(-0.5 * (xPts**2)) - nextPoint)).astype(np.complex)
+
 
 def dragGaussOn(amp=1,
                 length=0,
@@ -103,6 +106,7 @@ def dragGaussOn(amp=1,
     QQuad = dragScaling * derivScale * xPts * IQuad
     return amp * (IQuad + 1j * QQuad)
 
+
 def dragGaussOff(amp=1,
                  length=0,
                  cutoff=2,
@@ -120,6 +124,7 @@ def dragGaussOff(amp=1,
     QQuad = dragScaling * derivScale * xPts * IQuad
     return amp * (IQuad + 1j * QQuad)
 
+
 def tanh(amp=1, length=0, sigma=0, cutoff=2, samplingRate=1e9, **params):
     '''
     A rounded constant shape from the sum of two tanh shapes.
@@ -130,6 +135,7 @@ def tanh(amp=1, length=0, sigma=0, cutoff=2, samplingRate=1e9, **params):
     x2 = +length / 2 - cutoff * sigma
     return amp * 0.5 * (np.tanh((xPts - x1) / sigma) + np.tanh(
         (x2 - xPts) / sigma)).astype(np.complex)
+
 
 def measPulse(amp=1, length=0, sigma=0, samplingRate=1e9, **params):
     """
@@ -167,6 +173,7 @@ def autodyne(frequency=10e6, baseShape=constant, **params):
     timePts = np.linspace(0, params['length'], len(shape))
     shape *= np.exp(-1j * 2 * np.pi * frequency * timePts)
     return shape
+
 
 def arb_axis_drag(nutFreq=10e6,
                   rotAngle=0,
@@ -226,46 +233,3 @@ def arb_axis_drag(nutFreq=10e6,
             'Non-zero transverse rotation with zero-length pulse.')
 
     return shape
-
-def jpm(amp=1, length=0, sigma=5e-9, samplingRate=1.2e9, **params):
-
-    # Construct Park Bias Pulse
-    pulse = tanh(amp=amp, length=length, sigma=sigma, samplingRate=samplingRate)
-
-    # Add interaction pulse if needed
-    if "interactLength" in params and params['interactLength'] > 0:
-        interact = tanh(amp=params['interactAmp'],
-                            length=params['interactLength'], sigma=sigma,
-                            samplingRate=samplingRate)
-
-        # Pad and Add
-        delay1 = delay(length=params['interactDelay'], samplingRate=samplingRate)
-        delay2 = delay(length=(length-params['interactDelay']-params['interactLength']),
-                        samplingRate=samplingRate)
-        interact = np.hstack((delay1, interact, delay2))
-        pulse = pulse + interact
-
-    # Add Tipping Pulse
-    if "tiltLength" in params and params['tiltLength'] > 0:
-        tilt = gaussian(amp=params['tiltAmp'], length=params['tiltLength'],
-                        sigma=1e-9, samplingRate=samplingRate)
-        # Pad and Add
-        delay1 = delay(length=params['interactDelay']+(params['interactLength']-params['tiltLength']),
-                        samplingRate=samplingRate)
-        tilt = np.hstack((delay1, tilt, delay2))
-        pulse = pulse + tilt
-
-    # Add Standby Pulse
-    if "standbyLength" in params and params['standbyLength'] > 0:
-        standby = tanh(amp=params['standbyAmp'],
-                            length=params['standbyLength'],
-                            samplingRate=samplingRate)
-
-        # Pad and Add
-        delay1 = delay(length=params['standbyDelay'], samplingRate=samplingRate)
-        delay2 = delay(length=length-params['standbyDelay']-params['standbyLength'],
-                        samplingRate=samplingRate)
-        standby = np.hstack((delay1, standby, delay2))
-        pulse = pulse + standby
-
-    return pulse

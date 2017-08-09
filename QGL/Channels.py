@@ -177,31 +177,6 @@ class Measurement(LogicalChannel):
             self.trigChan = LogicalMarkerChannel(label='digitizerTrig')
 
 
-class JPM(LogicalChannel):
-    '''
-    Class for JPM Pulses.
-    '''
-    pulseParams = Dict(default={
-        'shapeFun': PulseShapes.jpm,
-        'sigma': 5e-9,
-        'amp': 0.25,
-        'length': 50e-6,
-        'standbyAmp': 0.1,
-        'standbyDelay': 5e-6,
-        'standbyLength': 1e-6,
-        'interactAmp': 0.25,
-        'interactDelay': 10e-6,
-        'interactLength': 25e-6,
-        'tiltAmp': 0.25,
-        'tiltLength': 10e-9})
-
-    gateChan = Instance((str, LogicalMarkerChannel))
-    frequency = Float(0.0).tag(
-        desc='modulation frequency of the channel (can be positive or negative)')
-
-    def __init__(self, **kwargs):
-        super(JPM, self).__init__(**kwargs)
-
 class Edge(LogicalChannel):
     '''
     Defines an arc/directed edge between qubit vertices. If a device supports bi-directional
@@ -243,7 +218,7 @@ class Edge(LogicalChannel):
             return False
 
 
-NewLogicalChannelList = [Qubit, Edge, LogicalMarkerChannel, Measurement, JPM]
+NewLogicalChannelList = [Qubit, Edge, LogicalMarkerChannel, Measurement]
 NewPhysicalChannelList = [
     PhysicalMarkerChannel,
     PhysicalQuadratureChannel,
