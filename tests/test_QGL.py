@@ -74,7 +74,7 @@ class SequenceTestCases(object):
                 chanStr = '/channels'
                 chanGroup = FID.create_group(chanStr)
                 for channel in channels:
-                    channelStr = repr(channel)
+                    channelStr = channel.label
                     FID.create_dataset('/' + chanStr + '/' + channelStr,
                                        data=waveform[channel])
 
@@ -99,15 +99,14 @@ class SequenceTestCases(object):
 
     def validate_case(self, caseName):
         # validates each sequences by using numpy assert_allclose for each channel
-
         assert (caseName in self.validWaveforms)
         validWaveform = self.validWaveforms[caseName]
-        for channelName, waveform in self.waveforms[caseName].items():
+        for channel, waveform in self.waveforms[caseName].items():
             print('Validating {0} Case {1} Channel {2}'.format(
-                self.__class__.__name__, caseName, repr(channelName)))
-            assert (repr(channelName) in validWaveform)
+                self.__class__.__name__, caseName, str(channel)))
+            assert (channel.label in validWaveform)
             np.testing.assert_allclose(waveform,
-                                       validWaveform[repr(channelName)],
+                                       validWaveform[channel.label],
                                        rtol=1e-5,
                                        atol=0)
 
@@ -152,7 +151,7 @@ class MultiQubitTestCases(SequenceTestCases):
 
     def generate(self):
         q1, q2 = self.newQubits()
-        self.sequences['operators'] = [X90(q1), X(q1) * Y(q2), CNOT(q1, q2),
+        self.sequences['operators'] = [X90(q1), X(q1) * Y(q2), CNOT_simple(q1, q2),
                                        Xm(q2), Y(q1) * X(q2)]
 
         self.sequences['align'] = [align(

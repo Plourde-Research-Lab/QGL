@@ -165,9 +165,9 @@ class AWGTestHelper(object):
 
     def compare_sequence(self, seqA, seqB, errorHeader):
         #unroll the time amplitude pairs for comparison
-        wfA = np.concatenate([ta[1] * np.ones(ta[0])
+        wfA = np.concatenate([ta[1] * np.ones(int(ta[0]))
                               for ta in seqA]) if len(seqA) else np.empty(0)
-        wfB = np.concatenate([ta[1] * np.ones(ta[0])
+        wfB = np.concatenate([ta[1] * np.ones(int(ta[0]))
                               for ta in seqB]) if len(seqB) else np.empty(0)
 
         self.assertTrue(
@@ -204,7 +204,7 @@ class TestSequences(object):
         self.set_awg_dir()
         seqs = [Ytheta(self.q1, amp=0.5), Z90m(self.q1),
                 Ztheta(self.q1, angle=np.pi / 4),
-                arb_axis_drag(self.q1, 5.0, np.pi / 4, np.pi / 2, np.pi / 8)]
+                arb_axis_drag(self.q1, 10.0e6, np.pi / 4, np.pi / 2, np.pi / 8)]
 
         for ac in range(0, 24):
             seqs.append(AC(self.q1, ac))
@@ -217,7 +217,7 @@ class TestSequences(object):
     def test_misc_seqs2(self):
         """ catch all for sequences not otherwise covered """
         self.set_awg_dir()
-        seqs = [ZX90_CR(self.q1, self.q2)]
+        seqs = [[ZX90_CR(self.q1, self.q2)]]
 
         filenames = compile_to_hardware(seqs, 'MISC2/MISC2')
         self.compare_sequences('MISC2')
@@ -225,7 +225,7 @@ class TestSequences(object):
     def test_misc_seqs3(self):
         """ catch all for sequences not otherwise covered """
         self.set_awg_dir()
-        seqs = [CNOT_CR(self.q1, self.q2)]
+        seqs = [[CNOT_CR(self.q1, self.q2)]]
 
         filenames = compile_to_hardware(seqs, 'MISC3/MISC3')
         self.compare_sequences('MISC3')
@@ -233,7 +233,7 @@ class TestSequences(object):
     def test_misc_seqs4(self):
         """ catch all for sequences not otherwise covered """
         self.set_awg_dir()
-        seqs = [CNOT_CR(self.q2, self.q1)]
+        seqs = [[CNOT_CR(self.q2, self.q1)]]
 
         filenames = compile_to_hardware(seqs, 'MISC4/MISC4')
         self.compare_sequences('MISC4')
@@ -424,21 +424,10 @@ class TestAPS2(unittest.TestCase, APS2Helper, TestSequences):
         self.channels['q1'].frequency = 100e6
         self.channels['cr'].frequency = 200e6
         ChannelLibrary.channelLib.build_connectivity_graph()
-        seqs = [CNOT_CR(self.q1, self.q2)]
+        seqs = [[CNOT_CR(self.q1, self.q2)]]
 
         filenames = compile_to_hardware(seqs, 'CNOT_CR_mux/CNOT_CR_mux')
         self.compare_sequences('CNOT_CR_mux')
-
-
-    @unittest.expectedFailure
-    def test_misc_seqs1(self):
-        """
-		Fails to do nutFreq being set to a very small value (5.0) for the
-		arb_axis_drag pulse causing a large waveform amplitude. Previously this
-		got phase shifted and then clipped so both chA and chB were railed. With
-		onboard modulation it gets clipped and then rotated.
-		"""
-        TestSequences.test_misc_seqs1(self)
 
 
 class TestAPS1(unittest.TestCase, AWGTestHelper, TestSequences):
@@ -590,7 +579,7 @@ class TestTek5014(unittest.TestCase, AWGTestHelper, TestSequences):
 
         self.finalize_map(mapping)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_misc_seqs2(self):
         """ Fails due to a divide by zero
 		    File "C:\Projects\Q\lib\PyQLab\QGL\TekPattern.py", line 77, in merge_waveform
@@ -599,7 +588,7 @@ class TestTek5014(unittest.TestCase, AWGTestHelper, TestSequences):
 		"""
         TestSequences.test_misc_seqs2(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_misc_seqs5(self):
         """ Fails due to a divide by zero
 		    File "C:\Projects\Q\lib\PyQLab\QGL\TekPattern.py", line 77, in merge_waveform
@@ -612,91 +601,91 @@ class TestTek5014(unittest.TestCase, AWGTestHelper, TestSequences):
     # AttributeError: 'Wait' object has no attribute 'isTimeAmp' at line 78
     # in TekPattern.py in merge_waveform
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_misc_seqs1(self):
         TestSequences.test_misc_seqs1(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_misc_seqs3(self):
         TestSequences.test_misc_seqs3(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_misc_seqs4(self):
         TestSequences.test_misc_seqs4(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_mux_CR(self):
         TestSequences.test_mux_CR(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_AllXY(self):
         TestSequences.test_AllXY(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_CR_PiRabi(self):
         TestSequences.test_CR_PiRabi(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_CR_EchoCRLen(self):
         TestSequences.test_CR_EchoCRLen(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_CR_EchoCRPhase(self):
         TestSequences.test_CR_EchoCRPhase(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Decoupling_HannEcho(self):
         TestSequences.test_Decoupling_HannEcho(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Decoupling_CPMG(self):
         TestSequences.test_Decoupling_CPMG(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_FlipFlop(self):
         TestSequences.test_FlipFlop(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_T1T2_InversionRecovery(self):
         TestSequences.test_T1T2_InversionRecovery(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_T1T2_Ramsey(self):
         TestSequences.test_T1T2_Ramsey(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_SPAM(self):
         TestSequences.test_SPAM(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_RabiAmp(self):
         TestSequences.test_Rabi_RabiAmp(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_RabiWidth(self):
         TestSequences.test_Rabi_RabiWidth(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_RabiAmp_NQubits(self):
         TestSequences.test_Rabi_RabiAmp_NQubits(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_RabiAmpPi(self):
         TestSequences.test_Rabi_RabiAmpPi(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_SingleShot(self):
         TestSequences.test_Rabi_SingleShot(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_Rabi_PulsedSpec(self):
         TestSequences.test_Rabi_PulsedSpec(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_RB_SingleQubitRB(self):
         TestSequences.test_RB_SingleQubitRB(self)
 
-    @unittest.expectedFailure
+    @unittest.skip("Tek5014 unused in years")
     def test_RB_SimultaneousRB_AC(self):
         TestSequences.test_RB_SimultaneousRB_AC(self)
 

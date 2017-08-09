@@ -261,7 +261,7 @@ class Instruction(object):
             cmpCodes = ["EQUAL", "NOTEQUAL", "GREATERTHAN", "LESSTHAN"]
             cmpCode = (self.payload >> 8) & 0x3
             out += " | " + cmpCodes[cmpCode]
-            out += ", mask = {}".format(self.payload & 0xff)
+            out += ", value = {}".format(self.payload & 0xff)
 
         elif any(
             [instrOpCode == op for op in [GOTO, CALL, RET, REPEAT, PREFETCH]]):
@@ -360,8 +360,8 @@ def LoadCmp(label=None):
     return Command(LOADCMP, 0, label=label)
 
 
-def Cmp(op, mask, label=None):
-    return Command(CMP, (op << 8) | (mask & 0xff), label=label)
+def Cmp(op, value, label=None):
+    return Command(CMP, (op << 8) | (value & 0xff), label=label)
 
 
 def Goto(addr, label=None):
@@ -705,8 +705,9 @@ def create_seq_instructions(seqs, offsets):
                 elif isinstance(entry, ControlFlow.LoadRepeat):
                     instructions.append(Load(entry.value - 1, label=label))
                 elif isinstance(entry, ControlFlow.ComparisonInstruction):
+                    # TODO modify Cmp operator to load from specified address
                     instructions.append(Cmp(cmpTable[entry.operator],
-                                            entry.mask,
+                                            entry.value,
                                             label=label))
 
                 continue
@@ -999,7 +1000,7 @@ def read_sequence_file(fileName):
         next_phase = np.zeros(NUM_NCO)
         next_frame = np.zeros(NUM_NCO)
         accumulated_phase = np.zeros(NUM_NCO)
-        reset_flag = [False, False]
+        reset_flag = [False]*NUM_NCO
 
         for data in instructions:
             instr = Instruction.unflatten(data)
@@ -1011,12 +1012,12 @@ def read_sequence_file(fileName):
                 (instr.opcode) == MODULATION and (modulator_opcode == 0x0)):
                 for ct in range(NUM_NCO):
                     if reset_flag[ct]:
-                        accumulated_phase[ct] = freq[
-                            ct] * ADDRESS_UNIT  #would expect this to be zero but this is first non-zero point
+                        #would expect this to be zero but this is first non-zero point
+                        accumulated_phase[ct] = next_freq[ct] * ADDRESS_UNIT
                         reset_flag[ct] = False
-                freq = next_freq
-                phase = next_phase
-                frame = next_frame
+                freq[:] = next_freq[:]
+                phase[:] = next_phase[:]
+                frame[:] = next_frame[:]
 
             #Assume new sequence at every WAIT
             if instr.opcode == WAIT:
