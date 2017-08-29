@@ -31,7 +31,7 @@ def create_cal_seqs(qubits, numRepeats, measChans=None, waitcmp=False, delay=Non
     #Add optional delay
     full_cal_seqs = [[seq, Id(qubits[0], delay), measBlock] if delay else [seq, measBlock] for seq in cal_seqs]
     if waitcmp:
-        [cal_seq.append(qwait('CMP')) for cal_seq in full_cal_seqs]
+        [cal_seq.append(qwait(kind='CMP')) for cal_seq in full_cal_seqs]
     return full_cal_seqs
 
 def cal_descriptor(qubits, numRepeats):
@@ -48,7 +48,7 @@ def cal_descriptor(qubits, numRepeats):
         descriptor['points'] += [state] * numRepeats
     return descriptor
 
-def time_descriptor(times, desired_units="us"):
+def delay_descriptor(delays, desired_units="us"):
     if desired_units == "s":
         scale = 1
     elif desired_units == "ms":
@@ -58,9 +58,9 @@ def time_descriptor(times, desired_units="us"):
     elif desired_units == "ns":
         scale = 1e9
     axis_descriptor = {
-        'name': 'time',
+        'name': 'delay',
         'unit': desired_units,
-        'points': list(scale * times),
+        'points': list(scale * delays),
         'partition': 1
     }
     return axis_descriptor

@@ -23,8 +23,9 @@ limitations under the License.
 '''
 
 import os.path
+import json
 from importlib import import_module
-from bokeh.io import vform
+from bokeh.layouts import column
 from bokeh.models import CustomJS, ColumnDataSource, Slider
 from bokeh.plotting import Figure, show
 
@@ -71,15 +72,17 @@ def resolve_translator(filename, translators):
     raise NameError("No translator found to open the given file %s", filename)
 
 
-def plot_pulse_files(fileNames):
+def plot_pulse_files(metafile):
     '''
-    plot_pulse_files(fileNames)
+    plot_pulse_files(metafile)
 
     Helper function to plot a list of AWG files. A JS slider allows choice of sequence number.
     '''
     #If we only go one filename turn it into a list
-    if isinstance(fileNames, str):
-        fileNames = [fileNames]
+    
+    with open(metafile, 'r') as FID:
+        meta_info = json.load(FID)
+    fileNames = list(meta_info["instruments"].values())
 
     dataDict = {}
     lineNames, num_seqs = extract_waveforms(dataDict, fileNames)
@@ -133,7 +136,7 @@ def plot_pulse_files(fileNames):
                     title="Sequence",
                     callback=callback)
 
-    layout = vform(slider, plot)
+    layout = column(slider, plot)
 
     show(layout)
 
@@ -237,6 +240,6 @@ def plot_pulse_files_compare(fileNames1, fileNames2):
                     title="Sequence",
                     callback=callback)
 
-    layout = vform(slider, plot)
+    layout = column(slider, plot)
 
     show(layout)

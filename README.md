@@ -5,7 +5,9 @@
 Quantum Gate Language (QGL) is a domain specific language embedded in python for
 specifying pulse sequences.
 
-See example usage in this [Jupyter notebook](https://github.com/BBN-Q/QGL/blob/master/doc/QGL-demo.ipynb).
+Read the [online documentation](https://bbn-q.github.io/QGL/) and see example
+usage in this [Jupyter
+notebook](https://github.com/BBN-Q/QGL/blob/master/doc/QGL-demo.ipynb).
 
 ## Setup instructions
 
@@ -27,6 +29,11 @@ pip install watchdog
 conda install future
 pip install watchdog
 conda install -c ecpy atom
+```
+
+For Python 3.6+ you may need to install watchdog from conda forge:
+```
+conda install -c conda-forge watchdog
 ```
 
 If the `QGL` module is not installed, the repository path needs to be in the

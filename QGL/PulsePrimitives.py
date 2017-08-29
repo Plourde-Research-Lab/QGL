@@ -21,7 +21,7 @@ import operator
 
 from math import pi, sin, cos, acos, sqrt
 import numpy as np
-from .PulseSequencer import Pulse, TAPulse, align
+from .PulseSequencer import Pulse, TAPulse, CompoundGate, align
 from functools import wraps, reduce
 
 
@@ -74,32 +74,61 @@ def Id(channel, *args, **kwargs):
 
 # the most generic pulse is Utheta
 def Utheta(qubit,
-           amp=0,
+           angle=0,
            phase=0,
            label='Utheta',
            ignoredStrParams=[],
            **kwargs):
-    '''  A generic rotation with variable amplitude and phase. '''
+    '''
+    A generic rotation with variable angle and phase.
+    This primitive needs to convert the requested rotation angle into a Pulse
+    amplitude. If the user would like to specify a specific amplitude, he/she
+    can specify it directly via the 'amp' keyword argument.
+    '''
     params = overrideDefaults(qubit, kwargs)
-        #amp and phase are now pulse parameters rather than shape parameters
+    # amp and phase are now pulse parameters rather than shape parameters
     if "amp" in params:
-      del params["amp"]
+        del params["amp"]
     if "phase" in params:
-      del params["phase"]
+        del params["phase"]
+    # allow override of angle -> amplitude lookup if the user provides an "amp"
+    # keyword argument
+    if "amp" in kwargs:
+        amp = kwargs["amp"]
+    else:
+        # construct an angle -> amplitude lookup table
+        # TODO should this live in the Channel object instead?
+        angle2amp = {
+            pi    :  qubit.pulseParams['piAmp'],
+            -pi   : -qubit.pulseParams['piAmp'],
+            pi/2  :  qubit.pulseParams['pi2Amp'],
+            -pi/2 : -qubit.pulseParams['pi2Amp'],
+        }
+        if angle in angle2amp:
+            amp = angle2amp[angle]
+        else:
+            # linearly scale based upon the 'pi/2' amplitude
+            amp  = (angle / pi/2) * qubit.pulseParams['pi2Amp']
     return Pulse(label, qubit, params, amp, phase, 0.0, ignoredStrParams)
 
 
 # generic pulses around X, Y, and Z axes
-def Xtheta(qubit, amp=0, label='Xtheta', ignoredStrParams=[], **kwargs):
-    '''  A generic X rotation with a variable amplitude  '''
-    ignoredStrParams += ['phase', 'frameChange']
-    return Utheta(qubit, amp, 0, label, ignoredStrParams, **kwargs)
+def Xtheta(qubit, angle=0, label='Xtheta', ignoredStrParams=None, **kwargs):
+    '''  A generic X rotation with a variable rotation angle  '''
+    if ignoredStrParams is None:
+        ignoredStrParams = ['phase', 'frameChange']
+    else:
+        ignoredStrParams += ['phase', 'frameChange']
+    return Utheta(qubit, angle, 0, label, ignoredStrParams, **kwargs)
 
 
-def Ytheta(qubit, amp=0, label='Ytheta', ignoredStrParams=[], **kwargs):
-    ''' A generic Y rotation with a variable amplitude '''
-    ignoredStrParams += ['phase', 'frameChange']
-    return Utheta(qubit, amp, pi / 2, label, ignoredStrParams, **kwargs)
+def Ytheta(qubit, angle=0, label='Ytheta', ignoredStrParams=None, **kwargs):
+    ''' A generic Y rotation with a variable rotation angle '''
+    if ignoredStrParams is None:
+        ignoredStrParams = ['phase', 'frameChange']
+    else:
+        ignoredStrParams += ['phase', 'frameChange']
+    return Utheta(qubit, angle, pi/2, label, ignoredStrParams, **kwargs)
 
 
 def Ztheta(qubit,
@@ -121,7 +150,7 @@ def Ztheta(qubit,
 @_memoize
 def X90(qubit, **kwargs):
     return Xtheta(qubit,
-                  qubit.pulseParams['pi2Amp'],
+                  pi/2,
                   label="X90",
                   ignoredStrParams=['amp'],
                   **kwargs)
@@ -129,7 +158,7 @@ def X90(qubit, **kwargs):
 @_memoize
 def X90m(qubit, **kwargs):
     return Xtheta(qubit,
-                  -qubit.pulseParams['pi2Amp'],
+                  -pi/2,
                   label="X90m",
                   ignoredStrParams=['amp'],
                   **kwargs)
@@ -137,7 +166,7 @@ def X90m(qubit, **kwargs):
 @_memoize
 def Y90(qubit, **kwargs):
     return Ytheta(qubit,
-                  qubit.pulseParams['pi2Amp'],
+                  pi/2,
                   label="Y90",
                   ignoredStrParams=['amp'],
                   **kwargs)
@@ -145,7 +174,7 @@ def Y90(qubit, **kwargs):
 @_memoize
 def Y90m(qubit, **kwargs):
     return Ytheta(qubit,
-                  -qubit.pulseParams['pi2Amp'],
+                  -pi/2,
                   label="Y90m",
                   ignoredStrParams=['amp'],
                   **kwargs)
@@ -157,17 +186,17 @@ def U90(qubit, phase=0, **kwargs):
     if "label" not in kwargs:
         kwargs["label"] = "U90"
     return Utheta(qubit,
-        qubit.pulseParams['pi2Amp'],
-        phase,
-        ignoredStrParams=['amp'],
-        **kwargs)
+                  pi/2,
+                  phase,
+                  ignoredStrParams=['amp'],
+                  **kwargs)
 
 if config.pulse_primitives_lib == 'standard':
     # pi rotations formed by different choice of pulse amplitude
     @_memoize
     def X(qubit, **kwargs):
         return Xtheta(qubit,
-                      qubit.pulseParams['piAmp'],
+                      pi,
                       label="X",
                       ignoredStrParams=['amp'],
                       **kwargs)
@@ -175,7 +204,7 @@ if config.pulse_primitives_lib == 'standard':
     @_memoize
     def Xm(qubit, **kwargs):
         return Xtheta(qubit,
-                      -qubit.pulseParams['piAmp'],
+                      -pi,
                       label="Xm",
                       ignoredStrParams=['amp'],
                       **kwargs)
@@ -183,7 +212,7 @@ if config.pulse_primitives_lib == 'standard':
     @_memoize
     def Y(qubit, **kwargs):
         return Ytheta(qubit,
-                      qubit.pulseParams['piAmp'],
+                      pi,
                       label="Y",
                       ignoredStrParams=['amp'],
                       **kwargs)
@@ -191,7 +220,7 @@ if config.pulse_primitives_lib == 'standard':
     @_memoize
     def Ym(qubit, **kwargs):
         return Ytheta(qubit,
-                      -qubit.pulseParams['piAmp'],
+                      -pi,
                       label="Ym",
                       ignoredStrParams=['amp'],
                       **kwargs)
@@ -202,10 +231,10 @@ if config.pulse_primitives_lib == 'standard':
         if "label" not in kwargs:
             kwargs["label"] = "U"
         return Utheta(qubit,
-            qubit.pulseParams['piAmp'],
-            phase,
-            ignoredStrParams=['amp'],
-            **kwargs)
+                      pi,
+                      phase,
+                      ignoredStrParams=['amp'],
+                      **kwargs)
 
 elif config.pulse_primitives_lib == 'all90':
     # pi rotations formed by two pi/2 rotations
@@ -282,8 +311,7 @@ def arb_axis_drag(qubit,
         calScale = (rotAngle / 2 / pi) * sampRate / sum(gaussPulse)
 
         #Calculate the phase ramp steps to achieve the desired Z component to the rotation axis
-        phaseSteps = -2 * pi * cos(
-            polarAngle) * calScale * gaussPulse / sampRate
+        phaseSteps = -2*pi * cos(polarAngle) * calScale * gaussPulse / sampRate
 
         #Calculate Z DRAG correction to phase steps
         #beta is a conversion between XY drag scaling and Z drag scaling
@@ -465,11 +493,47 @@ def AC(qubit, cliffNum):
         raise ValueError('Clifford number must be between 0 and 23')
 
 
-def DiAC(qubit, cliffNum, Xonly = False):
+def get_DiAC_phases(cliffNum):
     """
 
-    The set of 24 Diatomic Clifford single qubit pulses. Use X90(m), Z, Z90
-    if Xonly; use also Y90(m) otherwise
+    Returns the phases (in multiples of pi) of the three Z gates dressing the two X90
+    pulses comprising the DiAC pulse correspoding to cliffNum
+    e.g., get_DiAC_phases(1) returns a=0, b=1, c=1, in
+    Ztheta(a) + X90 + Ztheta(b) + X90 + Ztheta(c) = Id
+    """
+    DiAC_table = [
+    [0, 1, 1],
+    [0.5, -0.5, 0.5],
+    [0, 0, 0],
+    [0.5, 0.5, 0.5],
+    [0, -0.5, 1],
+    [0, 0, 1],
+    [0, 0.5, 1],
+    [0, 1, -0.5],
+    [0, 1, 0],
+    [0, 1, 0.5],
+    [0, 0, 0.5],
+    [0, 0, -0.5],
+    [1, -0.5, 1],
+    [1, 0.5, 1],
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [0.5, -0.5, 1],
+    [1, -0.5, -0.5],
+    [0, 0.5, -0.5],
+    [-0.5, -0.5, 1],
+    [1, 0.5, -0.5],
+    [0.5, 0.5, 1],
+    [0, -0.5, -0.5],
+    [-0.5, 0.5, 1]]
+    return DiAC_table[cliffNum]
+
+def DiAC(qubit, cliffNum, compiled = True):
+    """
+
+    The set of 24 Diatomic Clifford single qubit pulses. Each pulse is decomposed
+    as Ztheta(a) + X90 + Ztheta(b) + X90 + Ztheta(c) if compiled = False,
+    uses also Y90, Y90m and shorter sequences if compiled = True
 
     Parameters
     ----------
@@ -481,90 +545,89 @@ def DiAC(qubit, cliffNum, Xonly = False):
     pulse object
     """
     #Now a big else if chain for to get the specific Clifford
-    if cliffNum == 0:
-        #Identity gate
-        return Id(qubit, length=0)
-    elif cliffNum == 1:
-        #X90
-        return X90(qubit)
-    elif cliffNum == 2:
-        #X180
-        return X90(qubit)+X90(qubit)
-    elif cliffNum == 3:
-        #X90m
-        return X90m(qubit)
-    elif cliffNum == 4:
-        #Y90
-        return X90(qubit) + Z90m(qubit) + X90(qubit) + Z(qubit) if Xonly else Y90(qubit)
-    elif cliffNum == 5:
-        #Y180
-        return X90(qubit) + X90(qubit) + Z(qubit) if Xonly else Y90(qubit) + Y90(qubit)
-    elif cliffNum == 6:
-        #Y90m
-        return X90(qubit) + Z90(qubit) + X90(qubit) + Z(qubit) if Xonly else Y90m(qubit)
-    elif cliffNum == 7:
-        #Z90
-        return Z90(qubit)
-    elif cliffNum == 8:
-        #Z180
-        return Z(qubit)
-    elif cliffNum == 9:
-        #Z90m
-        return Z90m(qubit)
-    elif cliffNum == 10:
-        #X+Y 180
-        return X90(qubit) + X90(qubit) + Z90(qubit) if Xonly else Y90(qubit) + Y90(qubit) + Z90m(qubit)
-    elif cliffNum == 11:
-        #X-Y 180
-        return X90(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Y90(qubit) + Y90(qubit) + Z90(qubit)
-    elif cliffNum == 12:
-        #X+Z 180(Hadamard)
-        return Z(qubit) + X90(qubit) + Z90m(qubit) + X90(qubit) + Z(qubit) if Xonly else Z(qubit) + Y90(qubit)
-    elif cliffNum == 13:
-        #X-Z 180
-        return Z(qubit) + X90(qubit) + Z90(qubit) + X90(qubit) + Z(qubit) if Xonly else Z(qubit) + Y90m(qubit)
-    elif cliffNum == 14:
-        #Y+Z 180
-        return Z90(qubit) + X90(qubit) + Z90m(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Z90(qubit) + Y90(qubit) + Z90(qubit)
-    elif cliffNum == 15:
-        #Y-Z 180
-        return Z90(qubit) + X90(qubit) + Z90(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Z90(qubit) + Y90m(qubit) + Z90(qubit)
-    elif cliffNum == 16:
-            #X+Y+Z -120 (equivalent to -X-Y-Z 120)
-        return Z90(qubit) + X90(qubit) + Z90m(qubit) + X90(qubit) + Z(qubit) if Xonly else Z90(qubit) + Y90(qubit)
-    elif cliffNum == 17:
-        #X+Y+Z 120
-        return Z(qubit) + X90(qubit) + Z90m(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Z(qubit) + Y90(qubit) + Z90(qubit)
-    elif cliffNum == 18:
-            #X-Y+Z 120 (equivalent to -X+Y-Z 120)
-            return X90(qubit) + Z90(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Y90m(qubit) + Z90(qubit)
-    elif cliffNum == 19:
-        #X-Y+Z -120
-        return Z90m(qubit) + X90(qubit) + Z90m(qubit) + X90(qubit) + Z(qubit) if Xonly else Z90m(qubit) + Y90(qubit)
-    elif cliffNum == 20:
-            #X+Y-Z -120 (equivalent to -X-Y+Z 120)
-            return Z(qubit) + X90(qubit) + Z90(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Z(qubit) + Y90m(qubit) + Z90(qubit)
-    elif cliffNum == 21:
-        #X+Y-Z 120
-        return Z90(qubit) + X90(qubit) + Z90(qubit) + X90(qubit) + Z(qubit) if Xonly else Z90(qubit) + Y90m(qubit)
-    elif cliffNum == 22:
-        #-X+Y+Z -120 (equivalent to X-Y-Z 120)
-        return X90(qubit) + Z90m(qubit) + X90(qubit) + Z90m(qubit) if Xonly else Y90(qubit) + Z90(qubit)
-    elif cliffNum == 23:
-        #-X+Y+Z 120
-        return Z90m(qubit) + X90(qubit) + Z90(qubit) + X90(qubit) + Z(qubit) if Xonly else Z90m(qubit) + Y90m(qubit)
+    if not compiled:
+        DiAC_phases = get_DiAC_phases(cliffNum)
+        return Ztheta(qubit, angle = DiAC_phases[0]*np.pi) + X90(qubit) + Ztheta(qubit, angle = DiAC_phases[1]*np.pi) + \
+        X90(qubit) + Ztheta(qubit, angle = DiAC_phases[2]*np.pi)
     else:
-        raise ValueError('Clifford number must be between 0 and 23')
+        if cliffNum == 0:
+            #Identity gate
+            return Id(qubit, length=0)
+        elif cliffNum == 1:
+            #X90
+            return X90(qubit)
+        elif cliffNum == 2:
+            #X180
+            return X90(qubit)+X90(qubit)
+        elif cliffNum == 3:
+            #X90m
+            return X90m(qubit)
+        elif cliffNum == 4:
+            #Y90
+            return Y90(qubit)
+        elif cliffNum == 5:
+            #Y180
+            return Y90(qubit) + Y90(qubit)
+        elif cliffNum == 6:
+            #Y90m
+            return Y90m(qubit)
+        elif cliffNum == 7:
+            #Z90
+            return Z90(qubit)
+        elif cliffNum == 8:
+            #Z180
+            return Z(qubit)
+        elif cliffNum == 9:
+            #Z90m
+            return Z90m(qubit)
+        elif cliffNum == 10:
+            #X+Y 180
+            return Y90(qubit) + Y90(qubit) + Z90m(qubit)
+        elif cliffNum == 11:
+            #X-Y 180
+            return Y90(qubit) + Y90(qubit) + Z90(qubit)
+        elif cliffNum == 12:
+            #X+Z 180(Hadamard)
+            return Z(qubit) + Y90(qubit)
+        elif cliffNum == 13:
+            #X-Z 180
+            return Z(qubit) + Y90m(qubit)
+        elif cliffNum == 14:
+            #Y+Z 180
+            return Z90(qubit) + Y90(qubit) + Z90(qubit)
+        elif cliffNum == 15:
+            #Y-Z 180
+            return Z90(qubit) + Y90m(qubit) + Z90(qubit)
+        elif cliffNum == 16:
+                #X+Y+Z -120 (equivalent to -X-Y-Z 120)
+            return Z90(qubit) + Y90(qubit)
+        elif cliffNum == 17:
+            #X+Y+Z 120
+            return Z(qubit) + Y90(qubit) + Z90(qubit)
+        elif cliffNum == 18:
+            #X-Y+Z 120 (equivalent to -X+Y-Z 120)
+            return Y90m(qubit) + Z90(qubit)
+        elif cliffNum == 19:
+            #X-Y+Z -120
+            return Z90m(qubit) + Y90(qubit)
+        elif cliffNum == 20:
+            #X+Y-Z -120 (equivalent to -X-Y+Z 120)
+            return Z(qubit) + Y90m(qubit) + Z90(qubit)
+        elif cliffNum == 21:
+            #X+Y-Z 120
+            return Z90(qubit) + Y90m(qubit)
+        elif cliffNum == 22:
+            #-X+Y+Z -120 (equivalent to X-Y-Z 120)
+            return Y90(qubit) + Z90(qubit)
+        elif cliffNum == 23:
+            #-X+Y+Z 120
+            return Z90m(qubit) + Y90m(qubit)
+        else:
+            raise ValueError('Clifford number must be between 0 and 23')
 
 ## two-qubit primitivies
-def CNOT(source, target, **kwargs):
-    # construct (source, target) channel and pull parameters from there
-    channel = ChannelLibrary.EdgeFactory(source, target)
-    channel.pulseParams['piAmp'] = channel.pulseParams['amp']
-    p = X(channel, **kwargs)
-    return p._replace(label="CNOT")
 
-
+# helper used by echoCR
 def flat_top_gaussian(chan,
                       riseFall,
                       length,
@@ -574,9 +637,10 @@ def flat_top_gaussian(chan,
     """
     A constant pulse with rising and falling gaussian shape
     """
-    return Utheta(chan, length=riseFall, amp=amp, phase=phase, shapeFun=PulseShapes.gaussOn, label=label+"_rise") + \
-           Utheta(chan, length=length, amp=amp, phase=phase, shapeFun=PulseShapes.constant, label=label+"_top") + \
-           Utheta(chan, length=riseFall, amp=amp, phase=phase, shapeFun=PulseShapes.gaussOff, label=label+"_fall")
+    p =  Utheta(chan, length=riseFall, amp=amp, phase=phase, shapeFun=PulseShapes.gaussOn, label=label+"_rise") + \
+         Utheta(chan, length=length, amp=amp, phase=phase, shapeFun=PulseShapes.constant, label=label+"_top") + \
+         Utheta(chan, length=riseFall, amp=amp, phase=phase, shapeFun=PulseShapes.gaussOff, label=label+"_fall")
+    return p._replace(label=label)
 
 
 def echoCR(controlQ,
@@ -593,12 +657,14 @@ def echoCR(controlQ,
     if not CRchan.isforward(controlQ, targetQ):
         raise ValueError(
             'Could not find an edge with control qubit {0}'.format(controlQ))
+
     seq = [flat_top_gaussian(CRchan,
                              amp=amp,
                              riseFall=riseFall,
                              length=length,
                              phase=phase,
-                             label="echoCR_first_half"), X(controlQ),
+                             label="echoCR_first_half"),
+           X(controlQ),
            flat_top_gaussian(CRchan,
                              amp=amp,
                              riseFall=riseFall,
@@ -607,7 +673,7 @@ def echoCR(controlQ,
                              label="echoCR_second_half")]
     if lastPi:
         seq += [X(controlQ)]
-    return seq
+    return CompoundGate(seq)
 
 
 def ZX90_CR(controlQ, targetQ, **kwargs):
@@ -629,17 +695,35 @@ def CNOT_CR(controlQ, targetQ, **kwargs):
 
     if edge.isforward(controlQ, targetQ):
         # control and target for CNOT and CR match
-        return ZX90_CR(controlQ, targetQ, **
-                       kwargs) + [Z90m(controlQ) * X90m(targetQ)]
+        seq = ZX90_CR(controlQ, targetQ, **kwargs).seq + \
+            [Z90m(controlQ) * X90m(targetQ)]
     else:
         # control and target for CNOT and CR are inverted
-        return [Y90(controlQ) * Y90(targetQ),
+        seq = [Y90(controlQ) * Y90(targetQ),
                 X(controlQ) * X(targetQ)] + \
-                ZX90_CR(targetQ, controlQ, **kwargs) + \
+                ZX90_CR(targetQ, controlQ, **kwargs).seq + \
                [Z90(targetQ),
                 X90(controlQ) * Y90(targetQ),
                 Y90m(controlQ) * X(targetQ)]
+    return CompoundGate(seq)
 
+def CNOT_simple(source, target, **kwargs):
+    # construct (source, target) channel and pull parameters from there
+    channel = ChannelLibrary.EdgeFactory(source, target)
+    channel.pulseParams['piAmp'] = channel.pulseParams['amp']
+    # add "pi2Amp" too so that Utheta can construct its angle2amp lookup table
+    channel.pulseParams['pi2Amp'] = channel.pulseParams['amp'] / 2
+    p = X(channel, **kwargs)
+    return p._replace(label="CNOT")
+
+try:
+    cnot_impl = globals()[config.cnot_implementation]
+except:
+    raise NameError("A valid CNOT implementation was not defined [{}]".format(config.cnot_implementation))
+
+@_memoize
+def CNOT(source, target, **kwargs):
+    return cnot_impl(source, target, **kwargs)
 
 ## Measurement operators
 @_memoize

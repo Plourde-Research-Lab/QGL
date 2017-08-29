@@ -2,7 +2,7 @@ from ..PulsePrimitives import *
 from ..Compiler import compile_to_hardware
 from ..PulseSequencePlotter import plot_pulse_files
 import QGL.PulseShapes
-from .helpers import create_cal_seqs, time_descriptor, cal_descriptor
+from .helpers import create_cal_seqs, delay_descriptor, cal_descriptor
 from functools import reduce
 
 
@@ -31,11 +31,11 @@ def RabiAmp(qubit, amps, phase=0, showPlot=False):
         'partition': 1
     }]
 
-    fileNames = compile_to_hardware(seqs, 'Rabi/Rabi', axis_descriptor=axis_descriptor)
-    print(fileNames)
+    metafile = compile_to_hardware(seqs, 'Rabi/Rabi', axis_descriptor=axis_descriptor)
 
     if showPlot:
-        plot_pulse_files(fileNames)
+        plot_pulse_files(metafile)
+    return metafile
 
 
 def RabiWidth(qubit,
@@ -66,12 +66,12 @@ def RabiWidth(qubit,
                     phase=phase,
                     shapeFun=shapeFun), MEAS(qubit)] for l in widths]
 
-    fileNames = compile_to_hardware(seqs, 'Rabi/Rabi',
-        axis_descriptor=[time_descriptor(widths)])
-    print(fileNames)
+    metafile = compile_to_hardware(seqs, 'Rabi/Rabi',
+        axis_descriptor=[delay_descriptor(widths)])
 
     if showPlot:
-        plot_pulse_files(fileNames)
+        plot_pulse_files(metafile)
+    return metafile
 
 
 def RabiAmp_NQubits(qubits,
@@ -119,12 +119,12 @@ def RabiAmp_NQubits(qubits,
         cal_descriptor(qubits, calRepeats)
     ]
 
-    fileNames = compile_to_hardware(seqs, 'Rabi/Rabi',
+    metafile = compile_to_hardware(seqs, 'Rabi/Rabi',
         axis_descriptor=axis_descriptor)
-    print(fileNames)
 
     if showPlot:
-        plot_pulse_files(fileNames)
+        plot_pulse_files(metafile)
+    return metafile
 
 
 def RabiAmpPi(qubit, mqubit, amps, phase=0, showPlot=False):
@@ -153,12 +153,11 @@ def RabiAmpPi(qubit, mqubit, amps, phase=0, showPlot=False):
         'partition': 1
     }]
 
-    fileNames = compile_to_hardware(seqs, 'Rabi/Rabi', axis_descriptor=axis_descriptor)
-    print(fileNames)
+    metafile = compile_to_hardware(seqs, 'Rabi/Rabi', axis_descriptor=axis_descriptor)
 
     if showPlot:
-        plotWin = plot_pulse_files(fileNames)
-        return plotWin
+        plot_pulse_files(metafile)
+    return metafile
 
 
 def SingleShot(qubit, showPlot=False):
@@ -174,11 +173,11 @@ def SingleShot(qubit, showPlot=False):
         'partition': 1
     }
 
-    filenames = compile_to_hardware(seqs, 'SingleShot/SingleShot')
-    print(filenames)
+    metafile = compile_to_hardware(seqs, 'SingleShot/SingleShot')
 
     if showPlot:
-        plot_pulse_files(filenames)
+        plot_pulse_files(metafile)
+    return metafile
 
 
 def PulsedSpec(qubit, specOn=True, showPlot=False):
@@ -187,8 +186,8 @@ def PulsedSpec(qubit, specOn=True, showPlot=False):
     """
     qPulse = X(qubit) if specOn else Id(qubit)
     seqs = [[qPulse, MEAS(qubit)]]
-    filenames = compile_to_hardware(seqs, 'Spec/Spec')
-    print(filenames)
+    metafile = compile_to_hardware(seqs, 'Spec/Spec')
 
     if showPlot:
-        plot_pulse_files(filenames)
+        plot_pulse_files(metafile)
+    return metafile
