@@ -744,6 +744,23 @@ def MEAS(qubit, **kwargs):
         ignoredStrParams.append('amp')
     return Pulse("MEAS", measChan, params, amp, 0.0, 0.0, ignoredStrParams)
 
+@_memoize
+def TMEAS(qubit, **kwargs):
+    '''
+    TMEAS(q1) measures a qubit an. Applies to the pulse with the label M-q1
+    '''
+    channelName = "M-" + qubit.label
+    measChan = ChannelLibrary.MeasFactory(channelName)
+    params = overrideDefaults(measChan, kwargs)
+    if measChan.measType == 'autodyne':
+        params['frequency'] = measChan.autodyneFreq
+        params['baseShape'] = params.pop('shapeFun')
+        params['shapeFun'] = PulseShapes.tMeas
+    amp = params.pop('amp')
+    ignoredStrParams = ['phase', 'frameChange']
+    if 'amp' not in kwargs:
+        ignoredStrParams.append('amp')
+    return Pulse("TMEAS", measChan, params, amp, 0.0, 0.0, ignoredStrParams)
 
 #MEAS and ring-down time on one qubit, echo on every other
 def MeasEcho(qM, qD, delay, piShift=None, phase=0):
@@ -834,4 +851,11 @@ def JPM4(jpm, amp=1, phase=0, label='JPM4', ignoredStrParams=[], **kwargs):
       del params["amp"]
     if "phase" in params:
       del params["phase"]
+    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
+
+def Meander(jpm, amp=1, phase=0, label='Meander', ignoredStrParams=[], **kwargs):
+    params = overrideDefaults(jpm, kwargs)
+
+    params['shapeFun'] = PulseShapes.meander
+
     return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)

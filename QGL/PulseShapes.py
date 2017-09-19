@@ -6,7 +6,7 @@ import numpy as np
 from math import pi, sin, cos, acos, sqrt
 
 
-def gaussian(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
+def gaussian(amp=1, length=0, cutoff=2,samplingRate=1.2e9, **params):
     '''
     A simple gaussian shaped pulse.
     cutoff is how many sigma the pulse goes out
@@ -22,14 +22,14 @@ def gaussian(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
         (xPts[-1] + xStep)**2)))).astype(np.complex)
 
 
-def delay(length=0, samplingRate=1e9, **params):
+def delay(length=0,samplingRate=1.2e9, **params):
     '''
     A delay between pulses.
     '''
     return constant(0, length, samplingRate)
 
 
-def constant(amp=1, length=0, samplingRate=1e9, **params):
+def constant(amp=1, length=0,samplingRate=1.2e9, **params):
     '''
     A constant section.
     '''
@@ -43,7 +43,7 @@ def drag(amp=1,
          length=0,
          cutoff=2,
          dragScaling=0.5,
-         samplingRate=1e9,
+        samplingRate=1.2e9,
          **params):
     '''
     A gaussian pulse with a drag correction on the quadrature channel.
@@ -62,7 +62,7 @@ def drag(amp=1,
     QQuad = dragScaling * derivScale * xPts * np.exp(-0.5 * (xPts**2))
     return amp * (IQuad + 1j * QQuad)
 
-def gaussOn(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
+def gaussOn(amp=1, length=0, cutoff=2,samplingRate=1.2e9, **params):
     '''
     A half-gaussian pulse going from zero to full
     '''
@@ -77,7 +77,7 @@ def gaussOn(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
     amp = (amp / (1 - nextPoint))
     return (amp * (np.exp(-0.5 * (xPts**2)) - nextPoint)).astype(np.complex)
 
-def gaussOff(amp=1, length=0, cutoff=2, samplingRate=1e9, **params):
+def gaussOff(amp=1, length=0, cutoff=2,samplingRate=1.2e9, **params):
     '''
     A half-gaussian pulse going from full to zero
     '''
@@ -96,7 +96,7 @@ def dragGaussOn(amp=1,
                 length=0,
                 cutoff=2,
                 dragScaling=0.5,
-                samplingRate=1e9,
+               samplingRate=1.2e9,
                 **params):
     '''
     A half-gaussian pulse with drag correction going from zero to full
@@ -113,7 +113,7 @@ def dragGaussOff(amp=1,
                  length=0,
                  cutoff=2,
                  dragScaling=0.5,
-                 samplingRate=1e9,
+                samplingRate=1.2e9,
                  **params):
     '''
     A half-gaussian pulse with drag correction going from full to zero
@@ -126,7 +126,7 @@ def dragGaussOff(amp=1,
     QQuad = dragScaling * derivScale * xPts * IQuad
     return amp * (IQuad + 1j * QQuad)
 
-def tanh(amp=1, length=0, sigma=0, cutoff=2, samplingRate=1e9, **params):
+def tanh(amp=1, length=0, sigma=0, cutoff=2,samplingRate=1.2e9, **params):
     '''
     A rounded constant shape from the sum of two tanh shapes.
     '''
@@ -138,7 +138,7 @@ def tanh(amp=1, length=0, sigma=0, cutoff=2, samplingRate=1e9, **params):
         (x2 - xPts) / sigma)).astype(np.complex)
 
 
-def exp_decay(amp=1, length=0, sigma=0, samplingRate=1e9, steady_state=0.4, **params):
+def exp_decay(amp=1, length=0, sigma=0,samplingRate=1.2e9, steady_state=0.4, **params):
     """
     An exponentially decaying pulse to try and populate the cavity as quickly as possible.
     But then don't overdrive it.
@@ -147,7 +147,7 @@ def exp_decay(amp=1, length=0, sigma=0, samplingRate=1e9, steady_state=0.4, **pa
     timePts = (1.0 / samplingRate) * np.arange(numPts)
     return amp * ((1-steady_state) * np.exp(-timePts / sigma) + steady_state).astype(np.complex)
 
-def CLEAR(amp=1, length=0, sigma=0, samplingRate=1e9, **params):
+def CLEAR(amp=1, length=0, sigma=0,samplingRate=1.2e9, **params):
     """
     Pulse shape to quickly deplete the cavity at the end of a measurement.
     measPulse followed by 2 steps of length step_length and amplitudes amp1, amp2.
@@ -175,13 +175,23 @@ def autodyne(frequency=10e6, baseShape=constant, **params):
     shape *= np.exp(-1j * 2 * np.pi * frequency * timePts)
     return shape
 
+def tMeas(frequency=10e6, baseShape=constant, **params):
+    '''
+    A modulated pulse on Channel 1 and a trigger on Channel 2
+    '''
+    shape = baseShape(**params)
+    timePts = np.linspace(0, params['length'], len(shape))
+    pulse = np.exp(-1j * 2 * np.pi * frequency * timePts)
+    # trig = constant(amp=1, length=len(shape))
+    return np.real(pulse) + shape*1j
+
 def arb_axis_drag(nutFreq=10e6,
                   rotAngle=0,
                   polarAngle=0,
                   aziAngle=0,
                   length=0,
                   dragScaling=0.5,
-                  samplingRate=1e9,
+                 samplingRate=1.2e9,
                   **params):
     """
     Single-qubit arbitrary axis pulse implemented with phase ramping and frame change.
@@ -233,7 +243,7 @@ def arb_axis_drag(nutFreq=10e6,
 
     return shape
 
-def jpm(amp=1, length=0, sigma=0.5e-9, samplingRate=1.2e9, **params):
+def jpm(amp=1, length=0, sigma=0.5e-9,samplingRate=1.2e9, **params):
 
     # Construct Park Bias Pulse
     pulse = tanh(amp=params['parkAmp'], length=params['parkLength'], sigma=sigma, samplingRate=samplingRate)
@@ -271,10 +281,32 @@ def jpm(amp=1, length=0, sigma=0.5e-9, samplingRate=1.2e9, **params):
 
         # Pad and Add
         delay1 = delay(length=params['standbyDelay'], samplingRate=samplingRate)
-        delay2 = delay(length=length-params['interactLength'] - params['standbyLength'],
+        delay2 = delay(length=length-params['standbyDelay'] - params['standbyLength'],
                         samplingRate=samplingRate)
         standby = np.hstack((delay1, standby, delay2))
         pulse = pulse + standby
         # pulse = pulse + np.append(delay1, [standby, delay2])
 
+    return pulse
+
+def meander(amp=1, length=0, sigma=0.5e-9,samplingRate=1.2e9, amps=[1], lengths=[1e-7], **params):
+    # Expect amplitude array and time array
+    if type(amps) is tuple:
+        amps = list(amps)
+    else:
+        amps = [amps]
+    if type(lengths) is tuple:
+        lengths = list(lengths)
+    else:
+        lengths = [lengths]
+
+
+    if len(amps) is not len(lengths):
+        raise ValueError(
+            'Amps and lengths arrays should be same size.')
+    else:
+        pulse = []
+        for i in range(len(amps)):
+            pulse = np.hstack((pulse, constant(length=lengths[i], amp=amps[i],
+                                sigma=sigma, samplingRate=samplingRate)))
     return pulse
