@@ -4,7 +4,7 @@ All generic pulse shapes are defined here.
 
 import numpy as np
 from math import pi, sin, cos, acos, sqrt
-
+from scipy.ndimage import gaussian_filter1d
 
 def gaussian(amp=1, length=0, cutoff=2,samplingRate=1.2e9, **params):
     '''
@@ -243,53 +243,7 @@ def arb_axis_drag(nutFreq=10e6,
 
     return shape
 
-def jpm(amp=1, length=0, sigma=0.5e-9,samplingRate=1.2e9, **params):
-
-    # Construct Park Bias Pulse
-    pulse = tanh(amp=params['parkAmp'], length=params['parkLength'], sigma=sigma, samplingRate=samplingRate)
-
-    # Add interaction pulse if needed
-    if "interactLength" in params and params['interactLength'] > 0:
-        interact = tanh(amp=params['interactAmp']-params['parkAmp'],
-                            length=params['interactLength'], sigma=sigma,
-                            samplingRate=samplingRate)
-
-        # Pad and Add
-        delay1 = delay(length=params['interactDelay'], samplingRate=samplingRate)
-        delay2 = delay(length=(length-params['interactDelay']-params['interactLength']),
-                        samplingRate=samplingRate)
-        interact = np.hstack((delay1, interact, delay2))
-        pulse =  pulse + interact
-        # pulse = pulse + np.append(delay1, [interact, delay2])
-
-    # Add Tipping Pulse
-    if "tiltLength" in params and params['tiltLength'] > 0:
-        tilt = gaussian(amp=params['tiltAmp']-params['interactAmp'], length=params['tiltLength'],
-                        sigma=1e-9, samplingRate=samplingRate, phase=pi/2)
-        # Pad and Add
-        delay1 = delay(length=params['interactDelay']+(params['interactLength']-params['tiltLength']),
-                        samplingRate=samplingRate)
-        tilt = np.hstack((delay1, tilt, delay2))
-        pulse = pulse + tilt
-        # pulse = pulse + np.append(delay1, [tilt, delay2])
-
-    # Add Standby Pulse
-    if "standbyLength" in params and params['standbyLength'] > 0:
-        standby = tanh(amp=params['standbyAmp'] - params['parkAmp'],
-                            length=params['standbyLength'],
-                            samplingRate=samplingRate)
-
-        # Pad and Add
-        delay1 = delay(length=params['standbyDelay'], samplingRate=samplingRate)
-        delay2 = delay(length=length-params['standbyDelay'] - params['standbyLength'],
-                        samplingRate=samplingRate)
-        standby = np.hstack((delay1, standby, delay2))
-        pulse = pulse + standby
-        # pulse = pulse + np.append(delay1, [standby, delay2])
-
-    return pulse
-
-def meander(amp=1, length=0, sigma=0.5e-9,samplingRate=1.2e9, amps=[1], lengths=[1e-7], **params):
+def meander(amp=1, length=0, sigma=1e-9,samplingRate=1.2e9, amps=[1], lengths=[1e-7], **params):
     # Expect amplitude array and time array
     if type(amps) is tuple:
         amps = list(amps)
@@ -309,4 +263,4 @@ def meander(amp=1, length=0, sigma=0.5e-9,samplingRate=1.2e9, amps=[1], lengths=
         for i in range(len(amps)):
             pulse = np.hstack((pulse, constant(length=lengths[i], amp=amps[i],
                                 sigma=sigma, samplingRate=samplingRate)))
-    return pulse
+    return np.complex128(gaussian_filter1d(np.real(pulse), sigma=sigma*samplingRate))

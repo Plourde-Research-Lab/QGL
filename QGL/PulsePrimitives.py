@@ -797,62 +797,6 @@ def BLANK(chan, length):
     return TAPulse("BLANK", chan.gateChan, length, 1, 0, 0)
 
 
-# JPM operators
-
-## Single Bias Pulse (Park Bias)
-def JPM1(jpm, amp=1, phase=0, label='JPM1', ignoredStrParams=[], **kwargs):
-    params = overrideDefaults(jpm, kwargs)
-
-    params['shapeFun'] = PulseShapes.jpm
-    params['standbyLength'] = 0
-    params['tiltLength'] = 0
-    params['interactLength'] = 0
-
-    if "amp" in params:
-      del params["amp"]
-    if "phase" in params:
-      del params["phase"]
-    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
-
-## Second Interaction Bias Pulse during Park Bias
-def JPM2(jpm, amp=1, phase=0, label='JPM2', ignoredStrParams=[], **kwargs):
-    params = overrideDefaults(jpm, kwargs)
-
-    params['shapeFun'] = PulseShapes.jpm
-    params['standbyLength'] = 0
-    params['tiltLength'] = 0
-
-    if "amp" in params:
-      del params["amp"]
-    if "phase" in params:
-      del params["phase"]
-    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
-
-## Fast Tipping Pulse aligned with end of Interaction Pulse
-def JPM3(jpm, amp=1, phase=0, label='JPM3', ignoredStrParams=[], **kwargs):
-    params = overrideDefaults(jpm, kwargs)
-
-    params['shapeFun'] = PulseShapes.jpm
-    params['standbyLength'] = 0
-
-    if "amp" in params:
-      del params["amp"]
-    if "phase" in params:
-      del params["phase"]
-    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
-
-## Standby Pulse Preceding Interaction Pulse
-def JPM4(jpm, amp=1, phase=0, label='JPM4', ignoredStrParams=[], **kwargs):
-    params = overrideDefaults(jpm, kwargs)
-
-    params['shapeFun'] = PulseShapes.jpm
-
-    if "amp" in params:
-      del params["amp"]
-    if "phase" in params:
-      del params["phase"]
-    return Pulse(label, jpm, params, amp, phase, 0.0, ignoredStrParams)
-
 def Meander(jpm, amp=1, phase=0, label='Meander', ignoredStrParams=[], **kwargs):
     params = overrideDefaults(jpm, kwargs)
 
