@@ -111,6 +111,8 @@ def Utheta(qubit,
             amp  = (angle / pi/2) * qubit.pulseParams['pi2Amp']
     return Pulse(label, qubit, params, amp, phase, 0.0, ignoredStrParams)
 
+def SFQtheta(qubit, length=50e-9, phase=0, label='SFQtheta', ignoredStrParams=[], **kwargs):
+    pass
 
 # generic pulses around X, Y, and Z axes
 def Xtheta(qubit, angle=0, label='Xtheta', ignoredStrParams=None, **kwargs):
@@ -149,35 +151,67 @@ def Ztheta(qubit,
 #Setup the default 90/180 rotations
 @_memoize
 def X90(qubit, **kwargs):
-    return Xtheta(qubit,
-                  pi/2,
-                  label="X90",
-                  ignoredStrParams=['amp'],
-                  **kwargs)
+    if config.pulse_primitives_lib == 'sfq':
+        return Utheta(qubit,
+                      pi/2,
+                      label="X90",
+                      phase=0,
+                      ignoredStrParams=['amp'],
+                      **kwargs)
+    else:
+        return Xtheta(qubit,
+                      pi/2,
+                      label="X90",
+                      ignoredStrParams=['amp'],
+                      **kwargs)
 
 @_memoize
 def X90m(qubit, **kwargs):
-    return Xtheta(qubit,
-                  -pi/2,
-                  label="X90m",
-                  ignoredStrParams=['amp'],
-                  **kwargs)
+    if config.pulse_primitives_lib == 'sfq':
+        return Utheta(qubit,
+                      -pi/2,
+                      label="X90m",
+                      phase=0,
+                      ignoredStrParams=['amp'],
+                      **kwargs)
+    else:
+        return Xtheta(qubit,
+                      -pi/2,
+                      label="X90m",
+                      ignoredStrParams=['amp'],
+                      **kwargs)
 
 @_memoize
 def Y90(qubit, **kwargs):
-    return Ytheta(qubit,
-                  pi/2,
-                  label="Y90",
-                  ignoredStrParams=['amp'],
-                  **kwargs)
+    if config.pulse_primitives_lib == 'sfq':
+        return Utheta(qubit,
+                      pi/2,
+                      label="Y90",
+                      phase=np.pi/2,
+                      ignoredStrParams=['amp'],
+                      **kwargs)
+    else:
+        return Ytheta(qubit,
+                      pi/2,
+                      label="Y90",
+                      ignoredStrParams=['amp'],
+                      **kwargs)
 
 @_memoize
 def Y90m(qubit, **kwargs):
-    return Ytheta(qubit,
-                  -pi/2,
-                  label="Y90m",
-                  ignoredStrParams=['amp'],
-                  **kwargs)
+    if config.pulse_primitives_lib == 'sfq':
+        return Utheta(qubit,
+                      -pi/2,
+                      label="Y90m",
+                      phase=np.pi/2,
+                      ignoredStrParams=['amp'],
+                      **kwargs)
+    else:
+        return Ytheta(qubit,
+                      pi/2,
+                      label="Y90m",
+                      ignoredStrParams=['amp'],
+                      **kwargs)
 
 #90 degree rotation with control over the rotation axis
 @_memoize
@@ -191,76 +225,87 @@ def U90(qubit, phase=0, **kwargs):
                   ignoredStrParams=['amp'],
                   **kwargs)
 
-if config.pulse_primitives_lib == 'standard':
-    # pi rotations formed by different choice of pulse amplitude
-    @_memoize
-    def X(qubit, **kwargs):
+
+# pi rotations formed by different choice of pulse amplitude
+@_memoize
+def X(qubit, **kwargs):
+    if config.pulse_primitives_lib == 'standard':
         return Xtheta(qubit,
                       pi,
                       label="X",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    @_memoize
-    def Xm(qubit, **kwargs):
+    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+        return X90(qubit, **kwargs) + X90(qubit, **kwargs)
+
+    else:
+        raise Exception("Invalid pulse library")
+
+
+@_memoize
+def Xm(qubit, **kwargs):
+    if config.pulse_primitives_lib == 'standard':
         return Xtheta(qubit,
                       -pi,
                       label="Xm",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    @_memoize
-    def Y(qubit, **kwargs):
+    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+        return X90m(qubit, **kwargs) + X90m(qubit, **kwargs)
+
+    else:
+        raise Exception("Invalid pulse library")
+
+
+@_memoize
+def Y(qubit, **kwargs):
+    if config.pulse_primitives_lib == 'standard':
         return Ytheta(qubit,
                       pi,
                       label="Y",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    @_memoize
-    def Ym(qubit, **kwargs):
+    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+        return Y90(qubit, **kwargs) + Y90(qubit, **kwargs)
+
+    else:
+        raise Exception("Invalid pulse library")
+
+
+@_memoize
+def Ym(qubit, **kwargs):
+    if config.pulse_primitives_lib == 'standard':
         return Ytheta(qubit,
                       -pi,
                       label="Ym",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    @_memoize
-    def U(qubit, phase=0, **kwargs):
-        """ A generic 180 degree rotation with variable phase.  """
-        if "label" not in kwargs:
-            kwargs["label"] = "U"
+    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+        return Y90m(qubit, **kwargs) + Y90m(qubit, **kwargs)
+
+    else:
+        raise Exception("Invalid pulse library")
+
+
+@_memoize
+def U(qubit, phase=0, **kwargs):
+    """ A generic 180 degree rotation with variable phase.  """
+    if "label" not in kwargs:
+        kwargs["label"] = "U"
+
+    if config.pulse_primitives_lib == 'standard':
         return Utheta(qubit,
                       pi,
                       phase,
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-elif config.pulse_primitives_lib == 'all90':
-    # pi rotations formed by two pi/2 rotations
-    @_memoize
-    def X(qubit, **kwargs):
-        return X90(qubit, **kwargs) + X90(qubit, **kwargs)
-
-    @_memoize
-    def Xm(qubit, **kwargs):
-        return X90m(qubit, **kwargs) + X90m(qubit, **kwargs)
-
-    @_memoize
-    def Y(qubit, **kwargs):
-        return Y90(qubit, **kwargs) + Y90(qubit, **kwargs)
-
-    @_memoize
-    def Ym(qubit, **kwargs):
-        return Y90m(qubit, **kwargs) + Y90m(qubit, **kwargs)
-
-    @_memoize
-    def U(qubit, phase=0, **kwargs):
-        """ A generic 180 degree rotation with variable phase.  """
+    elif config.pulse_primitives_lib in  ['all90', 'sfq']:
         return U90(qubit, phase, *kwargs) + U90(qubit, phase, *kwargs)
-
-else:
-    raise Exception("Invalid pulse library")
 
 @_memoize
 def Z(qubit, **kwargs):

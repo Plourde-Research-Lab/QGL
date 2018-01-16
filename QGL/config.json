@@ -1,4 +1,9 @@
 {
 	"AWGDir": "Z:/Experiments/DR2/pyqlab-config/AWG",
-	"ChannelLibraryFile": "Z:/Experiments/DR2/pyqlab-config/Config/ChannelParams.json"
+	"ChannelLibraryFile": "Z:/Experiments/DR2/pyqlab-config/Config/ChannelParams.json",
+	"PulsePrimitivesLibrary": "standard",
+	"Y_angle": 90,
+	"cnot_implementation": "CNOT_CR",
+	"PlotBackground": "#EAEAF2",
+	"GridColor": "white"
 }
