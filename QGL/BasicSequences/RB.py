@@ -296,3 +296,33 @@ def SimultaneousRB_AC(qubits, seqs, showPlot=False):
     if showPlot:
         plot_pulse_files(metafile)
     return metafile
+
+def SFQQubitRB(qubit, seqs, cal, purity=False, showPlot=False):
+    """Single qubit randomized benchmarking using 90 and 180 generators from SFQ.
+        Parameters
+        ----------
+        qubit : logical channel to implement sequence (LogicalChannel)
+        seqs : list of lists of Clifford group integers
+        showPlot : whether to plot (boolean)
+        """
+
+    seqsBis = []
+    op = [Id(qubit, length=0), Y90m(qubit), X90(qubit)]
+    for ct in range(3 if purity else 1):
+        for seq in seqs:
+            # seqsBis.insert(0, Id(cal))
+            seqsBis.append(reduce(operator.add, [clifford_seq(c, qubit)
+                                                for c in seq]))
+            #append tomography pulse to measure purity
+            seqsBis[-1].append(op[ct])
+            #append measurement
+            seqsBis[-1].append(MEAS(cal))
+
+    #Tack on the calibration sequences
+    seqsBis += create_cal_seqs((cal, ), 2)
+
+    metafile = compile_to_hardware(seqsBis, 'RB/RB')
+
+    if showPlot:
+        plot_pulse_files(metafile)
+    return metafile

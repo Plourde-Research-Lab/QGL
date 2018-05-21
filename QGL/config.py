@@ -2,6 +2,9 @@
 
 import json
 import os.path
+from numpy import pi
+
+from os import environ
 
 import qgl_config_loc
 
@@ -9,7 +12,7 @@ import qgl_config_loc
 # and populate the global configuration dictionary
 
 QGLCfgFile = qgl_config_loc.get_config_path()
-print('Note: using QGLCfgFile [%s]' % QGLCfgFile)
+# print('Note: using QGLCfgFile [%s]' % QGLCfgFile)
 
 if not os.path.isfile(QGLCfgFile):
     rootFolder = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +43,9 @@ gridColor = QGLCfg.get('GridColor', None)
 
 # select pulse library (standard or all90)
 pulse_primitives_lib = QGLCfg.get('PulsePrimitivesLibrary', 'standard')
+Y_angle = QGLCfg.get('Y_angle', pi/2)
+environ['pulse_primitives_lib'] = pulse_primitives_lib
+environ['Y_angle'] = str(Y_angle)
 
 # select a CNOT implementation (a name of a Pulse function that implements
 # CNOT in your gate set, e.g. CNOT_simple or CNOT_CR)

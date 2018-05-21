@@ -141,6 +141,7 @@ def pull_uniform_entries(entries, entry_iterators):
     The function returns the resulting block length.
     '''
     numChan = len(entries)
+
     #keep track of how many entry iterators are used up
     iterDone = [ False ] * numChan
     ct = 0

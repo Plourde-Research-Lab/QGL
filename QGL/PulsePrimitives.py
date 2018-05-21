@@ -24,6 +24,7 @@ import numpy as np
 from .PulseSequencer import Pulse, TAPulse, CompoundGate, align
 from functools import wraps, reduce
 
+from os import environ
 
 def overrideDefaults(chan, updateParams):
     '''Helper function to update any parameters passed in and fill in the defaults otherwise.'''
@@ -108,7 +109,8 @@ def Utheta(qubit,
             amp = angle2amp[angle]
         else:
             # linearly scale based upon the 'pi/2' amplitude
-            amp  = (angle / pi/2) * qubit.pulseParams['pi2Amp']
+            amp  = (angle / (pi/2)) * qubit.pulseParams['pi2Amp'] #JK  (angle / pi/2 ) -> (angle / (pi/2))
+
     return Pulse(label, qubit, params, amp, phase, 0.0, ignoredStrParams)
 
 def SFQtheta(qubit, length=50e-9, phase=0, label='SFQtheta', ignoredStrParams=[], **kwargs):
@@ -151,13 +153,23 @@ def Ztheta(qubit,
 #Setup the default 90/180 rotations
 @_memoize
 def X90(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'sfq':
-        return Utheta(qubit,
-                      pi/2,
-                      label="X90",
-                      phase=0,
-                      ignoredStrParams=['amp'],
-                      **kwargs)
+    if environ['pulse_primitives_lib'] == 'sfq':
+        if 'pi2length' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="X90SFQ",
+                          phase=0,
+                          length=qubit.pulseParams['pi2length'],
+                          amp=qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Utheta(qubit,
+                          pi/2,
+                          label="X90",
+                          phase=0,
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         return Xtheta(qubit,
                       pi/2,
@@ -167,13 +179,23 @@ def X90(qubit, **kwargs):
 
 @_memoize
 def X90m(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'sfq':
-        return Utheta(qubit,
-                      -pi/2,
-                      label="X90m",
-                      phase=0,
-                      ignoredStrParams=['amp'],
-                      **kwargs)
+    if environ['pulse_primitives_lib'] == 'sfq':
+        if 'pi2length' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="X90mSFQ",
+                          phase=0,
+                          length=qubit.pulseParams['pi2length'],
+                          ignoredStrParams=['length'],
+                          amp=-1*qubit.pulseParams['piAmp'],
+                          **kwargs)
+        else:
+            return Utheta(qubit,
+                          -pi/2,
+                          label="X90m",
+                          phase=0,
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         return Xtheta(qubit,
                       -pi/2,
@@ -183,13 +205,23 @@ def X90m(qubit, **kwargs):
 
 @_memoize
 def Y90(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'sfq':
-        return Utheta(qubit,
-                      pi/2,
-                      label="Y90",
-                      phase=np.pi/2,
-                      ignoredStrParams=['amp'],
-                      **kwargs)
+    if environ['pulse_primitives_lib'] == 'sfq':
+        if 'pi2length' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="Y90SFQ",
+                          phase=qubit.pulseParams['phase'],
+                          length=qubit.pulseParams['pi2length'],
+                          amp=qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Utheta(qubit,
+                          pi/2,
+                          label="Y90",
+                          phase=0,
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         return Ytheta(qubit,
                       pi/2,
@@ -199,16 +231,26 @@ def Y90(qubit, **kwargs):
 
 @_memoize
 def Y90m(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'sfq':
-        return Utheta(qubit,
-                      -pi/2,
-                      label="Y90m",
-                      phase=np.pi/2,
-                      ignoredStrParams=['amp'],
-                      **kwargs)
+    if environ['pulse_primitives_lib'] == 'sfq':
+        if 'pi2length' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="Y90mSFQ",
+                          phase=qubit.pulseParams['phase'],
+                          length=qubit.pulseParams['pi2length'],
+                          amp=-1*qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Utheta(qubit,
+                          pi/2,
+                          label="Y90m",
+                          phase=0,
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         return Ytheta(qubit,
-                      pi/2,
+                      -pi/2,
                       label="Y90m",
                       ignoredStrParams=['amp'],
                       **kwargs)
@@ -229,64 +271,128 @@ def U90(qubit, phase=0, **kwargs):
 # pi rotations formed by different choice of pulse amplitude
 @_memoize
 def X(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'standard':
+    if environ['pulse_primitives_lib'] == 'standard':
         return Xtheta(qubit,
                       pi,
                       label="X",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+    elif environ['pulse_primitives_lib'] is 'all90':
         return X90(qubit, **kwargs) + X90(qubit, **kwargs)
 
+    elif environ['pulse_primitives_lib'] is 'sfq':
+        if 'pilength' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="XSFQ",
+                          phase=0,
+                          length=qubit.pulseParams['pilength'],
+                          amp=qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Xtheta(qubit,
+                          pi,
+                          label="X",
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         raise Exception("Invalid pulse library")
 
 
 @_memoize
 def Xm(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'standard':
+    if environ['pulse_primitives_lib'] == 'standard':
         return Xtheta(qubit,
                       -pi,
                       label="Xm",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+    elif environ['pulse_primitives_lib'] is 'all90':
         return X90m(qubit, **kwargs) + X90m(qubit, **kwargs)
 
+    elif environ['pulse_primitives_lib'] is 'sfq':
+        if 'pilength' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="Xm",
+                          phase=0,
+                          length=qubit.pulseParams['pilength'],
+                          amp=-1*qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Xtheta(qubit,
+                          -pi,
+                          label="Xm",
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         raise Exception("Invalid pulse library")
 
 
 @_memoize
 def Y(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'standard':
+    if environ['pulse_primitives_lib'] == 'standard':
         return Ytheta(qubit,
                       pi,
                       label="Y",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+    elif environ['pulse_primitives_lib'] is 'all90':
         return Y90(qubit, **kwargs) + Y90(qubit, **kwargs)
 
+    elif environ['pulse_primitives_lib'] is 'sfq':
+        if 'pilength' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="YSFQ",
+                          phase=qubit.pulseParams['phase'],
+                          length=qubit.pulseParams['pilength'],
+                          amp=qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Ytheta(qubit,
+                          pi,
+                          label="Y",
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         raise Exception("Invalid pulse library")
 
 
 @_memoize
 def Ym(qubit, **kwargs):
-    if config.pulse_primitives_lib == 'standard':
+    if environ['pulse_primitives_lib'] == 'standard':
         return Ytheta(qubit,
                       -pi,
                       label="Ym",
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    elif config.pulse_primitives_lib in ['all90', 'sfq']:
+    elif environ['pulse_primitives_lib'] is 'all90':
         return Y90m(qubit, **kwargs) + Y90m(qubit, **kwargs)
 
+    elif environ['pulse_primitives_lib'] is 'sfq':
+        if 'pilength' in qubit.pulseParams.keys():
+            return Utheta(qubit,
+                          0,
+                          label="YmSFQ",
+                          phase=qubit.pulseParams['phase'],
+                          length=qubit.pulseParams['pilength'],
+                          amp=-1*qubit.pulseParams['piAmp'],
+                          ignoredStrParams=['length'],
+                          **kwargs)
+        else:
+            return Ytheta(qubit,
+                          -pi,
+                          label="Ym",
+                          ignoredStrParams=['amp'],
+                          **kwargs)
     else:
         raise Exception("Invalid pulse library")
 
@@ -297,14 +403,14 @@ def U(qubit, phase=0, **kwargs):
     if "label" not in kwargs:
         kwargs["label"] = "U"
 
-    if config.pulse_primitives_lib == 'standard':
+    if environ['pulse_primitives_lib'] == 'standard':
         return Utheta(qubit,
                       pi,
                       phase,
                       ignoredStrParams=['amp'],
                       **kwargs)
 
-    elif config.pulse_primitives_lib in  ['all90', 'sfq']:
+    elif environ['pulse_primitives_lib'] in  ['all90', 'sfq']:
         return U90(qubit, phase, *kwargs) + U90(qubit, phase, *kwargs)
 
 @_memoize
